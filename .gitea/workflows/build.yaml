@@ -21,7 +21,7 @@ jobs:
         registry: r.antx.dev
         username: ${{ vars.DOCKER_USER }}
         password: ${{ secrets.DOCKER_KEY }}
-    - name: Build and Push ${{ vars.CONTAINER_NAME }}
+    - name: Build and Push ${{ vars.PROJECT_NAME }}
       uses: docker/build-push-action@v6
       with:
         push: true
