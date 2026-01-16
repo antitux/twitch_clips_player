@@ -1,8 +1,3 @@
 FROM nginx
-RUN apt-get update &&\
-    apt-get install -y git &&\
-    git clone https://github.com/antitux/twitch_clips_player.git /srv/site &&\
-    rm -rf /usr/share/nginx/html &&\
-    cp -a /srv/site /usr/share/nginx/html &&\
-    chown -R nginx:nginx /usr/share/nginx/html &&\
-    rm -rf /srv/site
+RUN rm -rf /usr/share/nginx/html
+COPY --chown=nginx:nginx assets *.html *.png /usr/share/nginx/html/
