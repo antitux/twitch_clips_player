@@ -64,6 +64,19 @@ $(document).ready(function () {
     let asyncResponse;
     let chatConnect  = getUrlParameter('chatConnect').trim(); // If set to 'false' it will not connect to Twitch chat: &chatConnect=false
 
+    const channel_keywords = ['http', 'https', 'twitch.tv'];
+
+    channel_keywords.forEach(keyword => {
+        if (channel.includes(keyword)) {
+            console.log(`${channel} is not an expected string. Exiting code...`);
+            throw new Error('Exiting code');
+        }
+        if (mainAccount.includes(keyword)) {
+            console.log(`${mainAccount} is not an expected string. Exiting code...`);
+            throw new Error('Exiting code');
+        }
+    });
+
     if (!chatConnect) {
         chatConnect = "true"; //default
     }
@@ -237,7 +250,9 @@ $(document).ready(function () {
 
             if (self || !message.startsWith('!')) return;
 
-            if (user['message-type'] === 'chat' && message.startsWith('!' + command)) {
+            if (user['message-type'] === 'chat' && message.startsWith('!' + command) && (user.mod || user.username === mainAccount)) {
+
+                console.log('Starting clips player using command: !' + command);
 
                 // Remove element before loading the clip
                 removeElements();
@@ -257,9 +272,7 @@ $(document).ready(function () {
                     $('#container').empty();
                     window.location.reload();
                 }
-            }
 
-            if (user.mod || user.username === mainAccount) {
                 // Plays clips when command is used
                 loadClip(channel[clip_index]);
             }
@@ -278,24 +291,25 @@ $(document).ready(function () {
     // Triggers on message
     if (chatConnect === 'true') {
         client.on('chat', (channel, user, message, self) => {
+            const controlCommands = ["!clipskip", "!clippause", "!clipplay", "!clipreload"];
+            const receivedCommand = message.toLowerCase().split(' ')[0];
 
             if (self || !message.startsWith('!')) return;
 
-            if (user['message-type'] === 'chat' && message.startsWith('!') && (user.mod || user.username === mainAccount)) {
+            if (user['message-type'] === 'chat' && controlCommands.includes(receivedCommand) && (user.mod || user.username === mainAccount)) {
                 let videoElement = document.querySelector("video");
-                const command = message.toLowerCase();
 
-                switch (command) {
+                switch (receivedCommand) {
                     case "!clipskip":
                         console.log("Skipping Clip");
                         nextClip(true); // skip clip
                         break;
                     case "!clippause":
                         console.log("Pausing Clip");
-                        videoElement.pause(); // pause clip
+                        if (videoElement) videoElement.pause(); // pause clip
                         break;
                     case "!clipplay":
-                        if (videoElement.paused) {
+                        if (videoElement && videoElement.paused) {
                             console.log("Playing Clip");
                             videoElement.play(); // continue playing clip if was paused
                         }
@@ -457,6 +471,9 @@ $(document).ready(function () {
         curr_clip.volume = 1.0;
         curr_clip.load();
 
+        // Remove elements before loading the clip and clip details
+        removeElements();
+
         // Show channel name on top of video
         if (showText === 'true') {
             if (customText) {
@@ -467,9 +484,6 @@ $(document).ready(function () {
             } else {
                 $("<div id='text-container'><span class='title-text'>" + clips_json.data[randomClip]['broadcaster_name'] + "</span></div>").appendTo('#container');
             }
-        } else {
-            // Remove element before loading the clip
-            removeElements();
         }
 
         // Show clip details panel
@@ -528,9 +542,6 @@ $(document).ready(function () {
 
                 $("<div id='details-container'>" + dText + "</div>").appendTo('#container');
             }
-        } else {
-            // Remove element before loading the clip
-            removeElements();
         }
 
         // Move to the next clip when the current one finishes playing
